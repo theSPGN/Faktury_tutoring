@@ -12,11 +12,17 @@ using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Windows.Forms;
 
+using System.Data;
+using System.Collections.ObjectModel;
+using System.Security.Policy;
+using System.Diagnostics.Tracing;
 
 // Autorstwo: Mateusz Zajda
 
 // Licencja: CC
 
+// data gridview
+// data table
 namespace Faktura_zadanie_tutoring_
 {
 
@@ -27,30 +33,32 @@ namespace Faktura_zadanie_tutoring_
         public class Produkt
         {
             public static int liczba_porzadkowa = 0;
-            public int nr;
-            public string nazwa;
-            public string liczba_sztuk;
-            public string cena_netto;
-            public string wartosc_netto;
-            public string stawka_vat;
-            public string kwota_vat;
-            public string wartosc_brutto;
-            public string termin_platnosci;
-            public string forma_platnosci;
-            public List<string> lista_cech = new List<string>();
+            public int nr { get; set; }
+            public string nazwa { get; set; }
+            public string liczba_sztuk { get; set; }
+            public string cena_netto { get; set; }
+            public string wartosc_netto { get; set; }
+            public string stawka_vat { get; set; }
+            public string kwota_vat { get; set; }
+            public string wartosc_brutto { get; set; }
+            public string termin_platnosci { get; set; }
+            public string forma_platnosci { get; set; }
+            public List<string> lista_cech { get; set; }
+
             public Produkt(string nazwa, string liczba_sztuk, string cena_netto, string wartosc_netto, string stawka_vat, string kwota_vat, string wartosc_brutto, string termin_platnosci, string forma_platnosci)
             {
                 liczba_porzadkowa++;
                 nr = liczba_porzadkowa;
-                this.nazwa = nazwa;               
-                this.liczba_sztuk = liczba_sztuk;               
-                this.cena_netto = cena_netto;     
-                this.wartosc_netto = wartosc_netto;       
-                this.stawka_vat = stawka_vat;        
-                this.kwota_vat = kwota_vat;         
-                this.wartosc_brutto = wartosc_brutto; 
+                this.nazwa = nazwa;
+                this.liczba_sztuk = liczba_sztuk;
+                this.cena_netto = cena_netto;
+                this.wartosc_netto = wartosc_netto;
+                this.stawka_vat = stawka_vat;
+                this.kwota_vat = kwota_vat;
+                this.wartosc_brutto = wartosc_brutto;
                 this.termin_platnosci = termin_platnosci;
                 this.forma_platnosci = forma_platnosci;
+                lista_cech = new List<string>();
                 lista_cech.Add(this.nazwa);
                 lista_cech.Add(this.liczba_sztuk);
                 lista_cech.Add(this.cena_netto);
@@ -61,9 +69,8 @@ namespace Faktura_zadanie_tutoring_
                 lista_cech.Add(this.termin_platnosci);
                 lista_cech.Add(this.forma_platnosci);
             }
-            
-            
         }
+
         public class Faktura
         {
             public string SpNazwa;
@@ -93,24 +100,26 @@ namespace Faktura_zadanie_tutoring_
             }
         }
 
-        public int numer_faktury = 0; 
+        public int numer_faktury = 0;
         public List<Produkt> lista_produktow = new List<Produkt>();
         public int pozycja_ostatniego = 0;
         static int ostatni_element_index = 0;
         static string path = "my_file.txt"; //bin\debug'
+
         public Form1()
         {
             InitializeComponent();
             
+
             try { Int32.TryParse(File.ReadLines(path).Last(), out numer_faktury); }
-            catch(Exception e) { Console.WriteLine(e); }
+            catch (Exception e) { Console.WriteLine(e); }
             finally
             {
                 numer_faktury++;// ostatnia faktura miala numer np. 10, wiêc ta ma 11
                                 // jeœli nie by³o faktury to tworzy nowy plik z numerem 1
             }
-            
-            
+
+
         }
 
         private void Drukuj_Click(object sender, EventArgs e)
@@ -119,15 +128,16 @@ namespace Faktura_zadanie_tutoring_
             P1dialog.Document = P1doc;
             P1dialog.AllowSomePages = false;
             P1dialog.AllowSelection = false;
-            if (P1dialog.ShowDialog() == DialogResult.OK) {
+            if (P1dialog.ShowDialog() == DialogResult.OK)
+            {
                 P1doc.PrintPage += new PrintPageEventHandler
                   (this.pd_PrintPage);
                 using (StreamWriter sw = new StreamWriter(path, false))
                     sw.Write(numer_faktury.ToString());
                 P1doc.Print();
             }
-               
-            
+
+
         }
 
         private void zapisz_dane_do_pliku(object Faktura)
@@ -166,7 +176,7 @@ namespace Faktura_zadanie_tutoring_
             pozycja_sprzedawca_tekst += wielkosc_tekstu_danych * 2;
             ev.Graphics.DrawString("Kod pocztowy: " + faktura_do_druku.SpKod + " " + faktura_do_druku.SpMiasto, printFont, Brushes.Black, new PointF(pozycja_sprzedawca_lewo, pozycja_sprzedawca_tekst));
             pozycja_sprzedawca_tekst += wielkosc_tekstu_danych * 2 + 2 * wielkosc_naglowka;
-            ev.Graphics.DrawString("Data: " + DateTime.Today.ToString().Substring(0,10), printFont, Brushes.Black, new PointF(pozycja_sprzedawca_lewo, pozycja_sprzedawca_tekst));
+            ev.Graphics.DrawString("Data: " + DateTime.Today.ToString().Substring(0, 10), printFont, Brushes.Black, new PointF(pozycja_sprzedawca_lewo, pozycja_sprzedawca_tekst));
             pozycja_sprzedawca_tekst += wielkosc_tekstu_danych * 2;
             ev.Graphics.DrawString(P1doc.DocumentName, printFont, Brushes.Black, new PointF(pozycja_sprzedawca_lewo, pozycja_sprzedawca_tekst));
 
@@ -184,9 +194,9 @@ namespace Faktura_zadanie_tutoring_
             ev.Graphics.DrawString("Adres :" + faktura_do_druku.NaAdres, printFont, Brushes.Black, new PointF(pozycja_nabywca_lewo, pozycja_nabywca_tekst));
             pozycja_nabywca_tekst += wielkosc_tekstu_danych * 2;
             ev.Graphics.DrawString("Kod pocztowy: " + faktura_do_druku.NaKod + " " + faktura_do_druku.NaMiasto, printFont, Brushes.Black, new PointF(pozycja_nabywca_lewo, pozycja_nabywca_tekst));
-            
+
         }
-        
+
         private void wypisz_produkty(object sender, PrintPageEventArgs ev, List<Produkt> lista_produktow, int pozycja_ostatniego)
         {
             int wielkosc_tekstu_danych = 12;
@@ -198,13 +208,13 @@ namespace Faktura_zadanie_tutoring_
             Font printFont = new Font("Arial", wielkosc_tekstu_danych);
             Font opisFont = new Font("Arial", wielkosc_tekstu_danych - 2);
 
-            Func<string, Font, float> dlugosc = (mytext,myfont) => ev.Graphics.MeasureString(mytext, myfont, 0, StringFormat.GenericTypographic).Width;
-            Func<string, Font, float> pozycja_srodka = (mytext,myfont) => (ev.PageSettings.PaperSize.Width / 2) - (dlugosc(mytext,myfont) / 2);
+            Func<string, Font, float> dlugosc = (mytext, myfont) => ev.Graphics.MeasureString(mytext, myfont, 0, StringFormat.GenericTypographic).Width;
+            Func<string, Font, float> pozycja_srodka = (mytext, myfont) => (ev.PageSettings.PaperSize.Width / 2) - (dlugosc(mytext, myfont) / 2);
 
-            ev.Graphics.DrawString("Produkty:", printFontTitles, Brushes.Black,new PointF(pozycja_srodka("Produkty:", printFontTitles), wysokosc));
-            
+            ev.Graphics.DrawString("Produkty:", printFontTitles, Brushes.Black, new PointF(pozycja_srodka("Produkty:", printFontTitles), wysokosc));
+
             wysokosc += 2 * wielkosc_tekstu_danych;
-            
+
             string opis = "Lp./ Nazwa/ liczba sztuk/ cena netto/ wartosc netto/ stawka vat/ kwota vat/ wartosc brutto/ termin platnosci/ forma platnosci";
             ev.Graphics.DrawString(opis, opisFont, Brushes.Black, new PointF(pozycja_srodka(opis, opisFont), wysokosc));
 
@@ -215,36 +225,38 @@ namespace Faktura_zadanie_tutoring_
                 int margines = 30;
                 int odstep = 20;
                 int pozycja_liczby_porzadkowej = margines;
-                int pozycja_lewo_nazwa = margines + odstep*2;
-                int pozycja_lewo_liczba_sztuk = pozycja_lewo_nazwa + (int) dlugosc(elementlisty.nazwa, printFont) + odstep;
-                int pozycja_lewo_cena_netto = pozycja_lewo_liczba_sztuk + (int)dlugosc(elementlisty.liczba_sztuk, printFont) + odstep; 
+                int pozycja_lewo_nazwa = margines + odstep * 2;
+                int pozycja_lewo_liczba_sztuk = pozycja_lewo_nazwa + (int)dlugosc(elementlisty.nazwa, printFont) + odstep;
+                int pozycja_lewo_cena_netto = pozycja_lewo_liczba_sztuk + (int)dlugosc(elementlisty.liczba_sztuk, printFont) + odstep;
                 int pozycja_lewo_wartosc_netto = pozycja_lewo_cena_netto + (int)dlugosc(elementlisty.cena_netto, printFont) + odstep;
-                int pozycja_lewo_stawka_vat = pozycja_lewo_wartosc_netto + (int)dlugosc(elementlisty.wartosc_netto, printFont) + odstep; 
-                int pozycja_lewo_kwota_vat = pozycja_lewo_stawka_vat + (int)dlugosc(elementlisty.stawka_vat, printFont) + odstep;    
-                int pozycja_lewo_wartosc_brutto = pozycja_lewo_kwota_vat + (int)dlugosc(elementlisty.kwota_vat, printFont) + odstep; 
-                int pozycja_lewo_termin_platnosci = pozycja_lewo_wartosc_brutto + (int)dlugosc(elementlisty.wartosc_brutto, printFont) + odstep; 
+                int pozycja_lewo_stawka_vat = pozycja_lewo_wartosc_netto + (int)dlugosc(elementlisty.wartosc_netto, printFont) + odstep;
+                int pozycja_lewo_kwota_vat = pozycja_lewo_stawka_vat + (int)dlugosc(elementlisty.stawka_vat, printFont) + odstep;
+                int pozycja_lewo_wartosc_brutto = pozycja_lewo_kwota_vat + (int)dlugosc(elementlisty.kwota_vat, printFont) + odstep;
+                int pozycja_lewo_termin_platnosci = pozycja_lewo_wartosc_brutto + (int)dlugosc(elementlisty.wartosc_brutto, printFont) + odstep;
                 int pozycja_lewo_forma_platnosci = pozycja_lewo_termin_platnosci + (int)dlugosc(elementlisty.termin_platnosci, printFont) + odstep;
 
-                int [] pozycja = {pozycja_lewo_nazwa,pozycja_lewo_liczba_sztuk,pozycja_lewo_cena_netto,
-                    pozycja_lewo_wartosc_netto, pozycja_lewo_stawka_vat, pozycja_lewo_kwota_vat, 
+                int[] pozycja = {pozycja_lewo_nazwa,pozycja_lewo_liczba_sztuk,pozycja_lewo_cena_netto,
+                    pozycja_lewo_wartosc_netto, pozycja_lewo_stawka_vat, pozycja_lewo_kwota_vat,
                     pozycja_lewo_wartosc_brutto, pozycja_lewo_termin_platnosci,pozycja_lewo_forma_platnosci
                 };
-                
-                
-                
+
+
+
                 if (wysokosc >= ev.PageSettings.PaperSize.Height - wielkosc_tekstu_danych * 20)
                 {
                     ev.HasMorePages = true;
                     ostatni_element_index += sublist.IndexOf(elementlisty);
                     return;
                 }
-                else { ev.HasMorePages = false;
+                else
+                {
+                    ev.HasMorePages = false;
                     ostatni_element_index = 0;
                 }
 
 
 
-                ev.Graphics.DrawString((elementlisty.nr).ToString() + ".", new Font(printFont,FontStyle.Bold), Brushes.Black, new PointF(pozycja_liczby_porzadkowej, wysokosc));
+                ev.Graphics.DrawString((elementlisty.nr).ToString() + ".", new Font(printFont, FontStyle.Bold), Brushes.Black, new PointF(pozycja_liczby_porzadkowej, wysokosc));
                 int index = 0;
                 foreach (string parametr in elementlisty.lista_cech)
                 {
@@ -268,10 +280,11 @@ namespace Faktura_zadanie_tutoring_
 
                     ev.Graphics.DrawString(parametr_to_draw, printFont, Brushes.Black, new PointF(pozycja[index], wysokosc));
                     index++;
+
                 }
 
             }
-           
+
         }
 
         private void podsumowanie(object sender, PrintPageEventArgs ev, List<Produkt> lista_produktow)
@@ -284,15 +297,15 @@ namespace Faktura_zadanie_tutoring_
             float suma_wartosc_netto = 0;
             float suma_kwota_vat = 0;
             float suma_wartosc_brutto = 0;
-            foreach(var produkt in lista_produktow)
+            foreach (var produkt in lista_produktow)
             {
-                
+
                 float.TryParse(produkt.cena_netto, out float cena_n);
-                
+
                 float.TryParse(produkt.wartosc_netto, out float wartosc_n);
-               
+
                 float.TryParse(produkt.kwota_vat, out float kwota_v);
-             
+
                 float.TryParse(produkt.wartosc_brutto, out float wartosc_b);
 
 
@@ -307,22 +320,64 @@ namespace Faktura_zadanie_tutoring_
             Tekst_do_wypisania += "Suma wartosci brutto: " + suma_wartosc_brutto.ToString();
 
             ev.Graphics.DrawString(Tekst_do_wypisania, printFont, Brushes.Black, new PointF(50, wysokosc - wielkosc_tekstu_danych * 18));
-            
+
 
 
         }
 
+        private void Wypisz_produkty_w_tabeli(object sender, PrintPageEventArgs ev, List<Produkt> lista_produktow, int pozycja_ostatniego)
+        {
+            int wielkosc_tekstu_danych = 12;
+            int wielkosc_naglowka = 15;
+            int wysokosc = pozycja_ostatniego + wielkosc_naglowka * 2 + 25;
+            Font printFontTitles = new Font("Arial", wielkosc_naglowka, FontStyle.Bold);
+            Func<string, Font, float> dlugosc = (mytext, myfont) => ev.Graphics.MeasureString(mytext, myfont, 0, StringFormat.GenericTypographic).Width;
+            Func<string, Font, float> pozycja_srodka = (mytext, myfont) => (ev.PageSettings.PaperSize.Width / 2) - (dlugosc(mytext, myfont) / 2);
+
+            ev.Graphics.DrawString("Produkty:", printFontTitles, Brushes.Black, new PointF(pozycja_srodka("Produkty:", printFontTitles), wysokosc));
+
+
+            // dokonczyæ tak jak poprzedni¹ funkcje wypisz, ¿e jak jest za d³ugie to wyrzuca na kolejna str
+            var DataGridView1 = new DataGridView();
+
+            DataGridView1.DataSource = lista_produktow;
+
+            DataGridView1.RowHeadersVisible = false;
+            
+            this.Controls.Add(DataGridView1);
+            this.PerformLayout();
+            DataGridView1.Visible = false;
+            DataGridView1.ScrollBars = ScrollBars.None;
+            DataGridView1.ClearSelection();
+            int summary = 0;
+            DataGridView1.Columns[0].Width = 25;
+            for (int i = 1; i < lista_produktow[0].lista_cech.Count+1;i++)
+            {
+                var column = DataGridView1.Columns[i];
+                column.Width = (800-100)/(lista_produktow[0].lista_cech.Count-1);
+                summary += column.Width;
+            }
+            DataGridView1.Width =summary;
+            DataGridView1.Height = (DataGridView1.RowCount+1) * DataGridView1.RowTemplate.Height;
+
+            Bitmap bitmap = new Bitmap(DataGridView1.Width, DataGridView1.Height);
+            DataGridView1.DrawToBitmap(bitmap, new Rectangle(0, 0, DataGridView1.Width, DataGridView1.Height));
+
+            ev.Graphics.DrawImage(bitmap, (ev.PageSettings.PaperSize.Width-DataGridView1.Width-DataGridView1.RowHeadersWidth+10)/2 , wysokosc+wielkosc_tekstu_danych*2);
+            
+
+        }
 
         private void miejsce_na_podpis(object sender, PrintPageEventArgs ev)
         {
             int wielkosc_tekstu_danych = 15;
             Font printFont = new Font("Arial", wielkosc_tekstu_danych);
             int wysokosc = ev.PageSettings.PaperSize.Height;
-            ev.Graphics.DrawString("Podpis sprzedawcy:", printFont, Brushes.Black, new PointF(50, wysokosc - wielkosc_tekstu_danych*7));
-            ev.Graphics.DrawString("Podpis Nabywcy:", printFont, Brushes.Black, new PointF(600, wysokosc - wielkosc_tekstu_danych*7));
-            ev.Graphics.DrawString("............................", printFont, Brushes.Black, new PointF(50, wysokosc - wielkosc_tekstu_danych*4));
-            ev.Graphics.DrawString("............................", printFont, Brushes.Black, new PointF(600, wysokosc - wielkosc_tekstu_danych*4));
-            
+            ev.Graphics.DrawString("Podpis sprzedawcy:", printFont, Brushes.Black, new PointF(50, wysokosc - wielkosc_tekstu_danych * 7));
+            ev.Graphics.DrawString("Podpis Nabywcy:", printFont, Brushes.Black, new PointF(600, wysokosc - wielkosc_tekstu_danych * 7));
+            ev.Graphics.DrawString("............................", printFont, Brushes.Black, new PointF(50, wysokosc - wielkosc_tekstu_danych * 4));
+            ev.Graphics.DrawString("............................", printFont, Brushes.Black, new PointF(600, wysokosc - wielkosc_tekstu_danych * 4));
+
         }
 
         private void pd_PrintPage(object sender, PrintPageEventArgs ev)
@@ -335,7 +390,8 @@ namespace Faktura_zadanie_tutoring_
             zapisz_dane_do_pliku(faktura_do_druku);
             nazwa_faktury();
             naglowki(sender, ev, faktura_do_druku);
-            wypisz_produkty(sender, ev, lista_produktow, pozycja_ostatniego);
+            //wypisz_produkty(sender, ev, lista_produktow, pozycja_ostatniego);
+            Wypisz_produkty_w_tabeli(sender, ev, lista_produktow, pozycja_ostatniego);
             miejsce_na_podpis(sender, ev);
             podsumowanie(sender, ev, lista_produktow);
 
@@ -375,8 +431,9 @@ namespace Faktura_zadanie_tutoring_
                 using (StreamWriter sw = new StreamWriter(path, false))
                     sw.Write(numer_faktury.ToString());
             }
-                
+
 
         }
+
     }
 }
