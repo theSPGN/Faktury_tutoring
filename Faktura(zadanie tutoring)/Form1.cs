@@ -202,7 +202,6 @@ namespace Faktura_zadanie_tutoring_
             int wielkosc_tekstu_danych = 12;
             int wielkosc_naglowka = 15;
             int wysokosc = pozycja_ostatniego + wielkosc_naglowka * 2 + 25;
-            //wysokosc = 840; //do testów skoñczenia strony
 
             Font printFontTitles = new Font("Arial", wielkosc_naglowka, FontStyle.Bold);
             Font printFont = new Font("Arial", wielkosc_tekstu_danych);
@@ -335,36 +334,56 @@ namespace Faktura_zadanie_tutoring_
             Func<string, Font, float> pozycja_srodka = (mytext, myfont) => (ev.PageSettings.PaperSize.Width / 2) - (dlugosc(mytext, myfont) / 2);
 
             ev.Graphics.DrawString("Produkty:", printFontTitles, Brushes.Black, new PointF(pozycja_srodka("Produkty:", printFontTitles), wysokosc));
-
-
-            // dokonczyæ tak jak poprzedni¹ funkcje wypisz, ¿e jak jest za d³ugie to wyrzuca na kolejna str
             var DataGridView1 = new DataGridView();
 
-            DataGridView1.DataSource = lista_produktow;
-
-            DataGridView1.RowHeadersVisible = false;
-            
-            this.Controls.Add(DataGridView1);
-            this.PerformLayout();
-            DataGridView1.Visible = false;
-            DataGridView1.ScrollBars = ScrollBars.None;
-            DataGridView1.ClearSelection();
-            int summary = 0;
-            DataGridView1.Columns[0].Width = 25;
-            for (int i = 1; i < lista_produktow[0].lista_cech.Count+1;i++)
+            while (ostatni_element_index < lista_produktow.Count)
             {
-                var column = DataGridView1.Columns[i];
-                column.Width = (800-100)/(lista_produktow[0].lista_cech.Count-1);
-                summary += column.Width;
+                List<Produkt> sublist = lista_produktow.GetRange(ostatni_element_index, Math.Min(23, lista_produktow.Count - ostatni_element_index));
+
+                if (sublist.Count == 0) {
+                    break;
+                }
+                    
+                
+                
+                DataGridView1.DataSource = sublist;
+                DataGridView1.RowHeadersVisible = false;
+                this.Controls.Add(DataGridView1);
+                this.PerformLayout();
+                DataGridView1.Visible = false;
+                DataGridView1.ScrollBars = ScrollBars.None;
+                DataGridView1.ClearSelection();
+                int summary = 0;
+                DataGridView1.Columns[0].Width = 25;
+
+                for (int i = 1; i < lista_produktow[0].lista_cech.Count + 1; i++)
+                {
+                    var column = DataGridView1.Columns[i];
+                    column.Width = (800 - 100) / (lista_produktow[0].lista_cech.Count - 1);
+                    summary += column.Width;
+                }
+
+                DataGridView1.Width = summary;
+                DataGridView1.Height = (DataGridView1.RowCount + 1) * DataGridView1.RowTemplate.Height;
+
+                Bitmap bitmap = new Bitmap(DataGridView1.Width, DataGridView1.Height);
+                DataGridView1.DrawToBitmap(bitmap, new Rectangle(0, 0, DataGridView1.Width, DataGridView1.Height));
+
+                ev.Graphics.DrawImage(bitmap, (ev.PageSettings.PaperSize.Width - DataGridView1.Width - DataGridView1.RowHeadersWidth + 10) / 2, wysokosc + wielkosc_tekstu_danych * 2);
+
+                ostatni_element_index += sublist.Count;
+
+                if (ostatni_element_index < lista_produktow.Count)
+                    ev.HasMorePages = true;
+                else
+                {
+                    ev.HasMorePages = false;
+                    ostatni_element_index = 0;
+                }
+                    return;
+                
+                    
             }
-            DataGridView1.Width =summary;
-            DataGridView1.Height = (DataGridView1.RowCount+1) * DataGridView1.RowTemplate.Height;
-
-            Bitmap bitmap = new Bitmap(DataGridView1.Width, DataGridView1.Height);
-            DataGridView1.DrawToBitmap(bitmap, new Rectangle(0, 0, DataGridView1.Width, DataGridView1.Height));
-
-            ev.Graphics.DrawImage(bitmap, (ev.PageSettings.PaperSize.Width-DataGridView1.Width-DataGridView1.RowHeadersWidth+10)/2 , wysokosc+wielkosc_tekstu_danych*2);
-            
 
         }
 
@@ -387,6 +406,8 @@ namespace Faktura_zadanie_tutoring_
                 SprzedawcaMiasto.Text, NabywcaNazwaFirmy.Text, NabywcaNIP.Text,
                 NabywcaAdres.Text, NabywcaKodPocztowy.Text, NabywcaMiasto.Text, lista_produktow);
 
+            ev.HasMorePages = false;
+            ev.Graphics.DrawString("", new Font("Arial",1), Brushes.Black, 0, 0);
             zapisz_dane_do_pliku(faktura_do_druku);
             nazwa_faktury();
             naglowki(sender, ev, faktura_do_druku);
@@ -405,7 +426,7 @@ namespace Faktura_zadanie_tutoring_
                     CenaNetto.Text, WartoscNetto.Text, StawkaVAT.Text,
                     KwotaVAT.Text, WartoscBrutto.Text, TerminPlatnosci.Text, FormaPlatnosci.Text);
                 lista_produktow.Add(p1);
-                NazwaProduktu.Text = "";
+               NazwaProduktu.Text = "";
                 LiczbaSztuk.Text = "";
                 CenaNetto.Text = "";
                 WartoscNetto.Text = "";
