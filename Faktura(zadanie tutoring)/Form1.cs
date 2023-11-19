@@ -16,7 +16,9 @@ using System.Data;
 using System.Collections.ObjectModel;
 using System.Security.Policy;
 using System.Diagnostics.Tracing;
-
+using Microsoft.Data.SqlClient;
+using static Faktura_zadanie_tutoring_.Form1;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 // Autorstwo: Mateusz Zajda
 
 // Licencja: CC
@@ -135,6 +137,13 @@ namespace Faktura_zadanie_tutoring_
                 using (StreamWriter sw = new StreamWriter(path, false))
                     sw.Write(numer_faktury.ToString());
                 P1doc.Print();
+
+                Faktura faktura_do_druku = new(SprzedawcaNazwaFirmy.Text,
+                SprzedawcaNIP.Text, SprzedawcaAdres.Text, SprzedawcaKodPocztowy.Text,
+                SprzedawcaMiasto.Text, NabywcaNazwaFirmy.Text, NabywcaNIP.Text,
+                NabywcaAdres.Text, NabywcaKodPocztowy.Text, NabywcaMiasto.Text, lista_produktow);
+
+                WriteToDatabase(lista_produktow);
             }
 
 
@@ -451,10 +460,75 @@ namespace Faktura_zadanie_tutoring_
                 P1doc.Print();
                 using (StreamWriter sw = new StreamWriter(path, false))
                     sw.Write(numer_faktury.ToString());
+                WriteToDatabase(lista_produktow);
             }
 
 
         }
 
-    }
+        public void WriteToDatabase(List<Produkt> lista_produktow)
+    {
+            string connectionString = "Server=DESKTOP-OOPT79L\\SQLEXPRESS;Database=FAKTURA;" +
+                "Integrated Security=True;Encrypt=False;TrustServerCertificate=true;";
+
+            using (SqlConnection connection = new SqlConnection(connectionString))
+        {
+            connection.Open();
+
+            foreach (var produkt in lista_produktow)
+            {
+                string query = "INSERT INTO Produkty (numer_faktury, nr, nazwa, liczba_sztuk, cena_netto, wartosc_netto, stawka_vat, kwota_vat, wartosc_brutto, termin_platnosci, forma_platnosci) " +
+                               "VALUES (@numer_faktury, @nr, @nazwa, @liczba_sztuk, @cena_netto, @wartosc_netto, @stawka_vat, @kwota_vat, @wartosc_brutto, @termin_platnosci, @forma_platnosci)";
+
+                using (SqlCommand command = new SqlCommand(query, connection))
+                {
+                    command.Parameters.AddWithValue("@numer_faktury", numer_faktury);
+                    command.Parameters.AddWithValue("@nr", produkt.nr);
+                    command.Parameters.AddWithValue("@nazwa", produkt.nazwa);
+                    command.Parameters.AddWithValue("@liczba_sztuk", produkt.liczba_sztuk);
+                    command.Parameters.AddWithValue("@cena_netto", produkt.cena_netto);
+                    command.Parameters.AddWithValue("@wartosc_netto", produkt.wartosc_netto);
+                    command.Parameters.AddWithValue("@stawka_vat", produkt.stawka_vat);
+                    command.Parameters.AddWithValue("@kwota_vat", produkt.kwota_vat);
+                    command.Parameters.AddWithValue("@wartosc_brutto", produkt.wartosc_brutto);
+                    command.Parameters.AddWithValue("@termin_platnosci", produkt.termin_platnosci);
+                    command.Parameters.AddWithValue("@forma_platnosci", produkt.forma_platnosci);
+
+                    command.ExecuteNonQuery();
+                }
+            }
+
+                Faktura faktura_do_druku = new(SprzedawcaNazwaFirmy.Text,
+                   SprzedawcaNIP.Text, SprzedawcaAdres.Text, SprzedawcaKodPocztowy.Text,
+                   SprzedawcaMiasto.Text, NabywcaNazwaFirmy.Text, NabywcaNIP.Text,
+                   NabywcaAdres.Text, NabywcaKodPocztowy.Text, NabywcaMiasto.Text, lista_produktow);
+                string query2 = "INSERT INTO Klient (SprzedawcaNazwaFirmy, SprzedawcaNIP, " +
+                    "SprzedawcaAdres, SprzedawcaKodPocztowy, SprzedawcaMiasto, NabywcaNazwaFirmy, NabywcaNip, NabywcaAdres" +
+                    "NabywcaKodPocztowy, NabywcaMiasto) " +
+                               "VALUES (@SprzedawcaNazwaFirmy, @SprzedawcaNIP, " +
+                    "@SprzedawcaAdres, @SprzedawcaKodPocztowy, @SprzedawcaMiasto, @NabywcaNazwaFirmy, @NabywcaNip, " +
+                    "@NabywcaAdres, @NabywcaKodPocztowy, @NabywcaMiasto)";
+                using (SqlCommand command = new SqlCommand(query2, connection))
+                {
+                    command.Parameters.AddWithValue("@SprzedawcaNazwaFirmy", SprzedawcaNazwaFirmy.Text);
+                    command.Parameters.AddWithValue("@SprzedawcaNIP", SprzedawcaNIP.Text);
+                    command.Parameters.AddWithValue("@SprzedawcaAdres", SprzedawcaAdres.Text);
+                    command.Parameters.AddWithValue("@SprzedawcaKodPocztowy", SprzedawcaKodPocztowy.Text);
+                    command.Parameters.AddWithValue("@SprzedawcaMiasto", SprzedawcaMiasto.Text);
+                    command.Parameters.AddWithValue("@NabywcaNazwaFirmy", NabywcaNazwaFirmy.Text);
+                    command.Parameters.AddWithValue("@NabywcaNip", NabywcaNIP.Text);
+                    command.Parameters.AddWithValue("@NabywcaAdres", NabywcaAdres.Text);
+                    command.Parameters.AddWithValue("@NabywcaKodPocztowy", NabywcaKodPocztowy.Text);
+                    command.Parameters.AddWithValue("@NabywcaMiasto", NabywcaMiasto.Text);
+
+                    command.ExecuteNonQuery();
+                }
+
+
+
+            }
+        }
+
+
+}
 }
