@@ -19,6 +19,8 @@ using System.Diagnostics.Tracing;
 using Microsoft.Data.SqlClient;
 using static Faktura_zadanie_tutoring_.Form1;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
+using System.CodeDom.Compiler;
+using System.Text;
 // Autorstwo: Mateusz Zajda
 
 // Licencja: CC
@@ -149,11 +151,6 @@ namespace Faktura_zadanie_tutoring_
 
         }
 
-        private void zapisz_dane_do_pliku(object Faktura)
-        {
-            // Wpisywanie do pliku danych (pod bazy danych?)
-        }
-
         private void nazwa_faktury()
         {
             DateTime localDate = DateTime.Today;
@@ -165,6 +162,7 @@ namespace Faktura_zadanie_tutoring_
             numer_faktury_word += numer_faktury.ToString();
             P1doc.DocumentName = "Faktura: " + numer_faktury_word + Faktura_name;
         }
+        
         private void naglowki(object sender, PrintPageEventArgs ev, Faktura faktura_do_druku)
         {
             int wielkosc_tekstu_danych = 12;
@@ -343,46 +341,87 @@ namespace Faktura_zadanie_tutoring_
             Func<string, Font, float> pozycja_srodka = (mytext, myfont) => (ev.PageSettings.PaperSize.Width / 2) - (dlugosc(mytext, myfont) / 2);
 
             ev.Graphics.DrawString("Produkty:", printFontTitles, Brushes.Black, new PointF(pozycja_srodka("Produkty:", printFontTitles), wysokosc));
+            
             var DataGridView1 = new DataGridView();
+            DataGridView1.DefaultCellStyle.WrapMode = DataGridViewTriState.True;
+            DataGridView1.BackgroundColor = Color.White;
 
-            while (ostatni_element_index < lista_produktow.Count)
+            List<Produkt> list_with_spaces = new List<Produkt>();
+            int numer = 1;
+            foreach (var Produkty in lista_produktow)
             {
-                List<Produkt> sublist = lista_produktow.GetRange(ostatni_element_index, Math.Min(23, lista_produktow.Count - ostatni_element_index));
+                Produkt produkt_with_spaces = new Produkt(
+                dodaj_spacje(Produkty.nazwa, 12),
+                dodaj_spacje(Produkty.liczba_sztuk, 12),
+                dodaj_spacje(Produkty.cena_netto, 12),
+                dodaj_spacje(Produkty.wartosc_netto, 12),
+                dodaj_spacje(Produkty.stawka_vat, 12),
+                dodaj_spacje(Produkty.kwota_vat, 12),
+                dodaj_spacje(Produkty.wartosc_brutto, 12),
+                dodaj_spacje(Produkty.termin_platnosci, 12),
+                dodaj_spacje(Produkty.forma_platnosci, 8)
+                    );
+                list_with_spaces.Add(produkt_with_spaces);
+                produkt_with_spaces.nr = numer;
+                numer++;
+            }
 
-                if (sublist.Count == 0) {
+
+
+            while (ostatni_element_index < list_with_spaces.Count)
+            {
+                List<Produkt> sublist = list_with_spaces.GetRange(ostatni_element_index, list_with_spaces.Count - ostatni_element_index);
+
+                if (sublist.Count == 0) 
                     break;
-                }
-                    
-                
                 
                 DataGridView1.DataSource = sublist;
+                DataGridView1.AutoSizeRowsMode = DataGridViewAutoSizeRowsMode.AllCells;
                 DataGridView1.RowHeadersVisible = false;
                 this.Controls.Add(DataGridView1);
                 this.PerformLayout();
                 DataGridView1.Visible = false;
                 DataGridView1.ScrollBars = ScrollBars.None;
-                DataGridView1.ClearSelection();
-                int summary = 0;
+                int summary_width_of_columns = 0;
+                int summary_height_of_rows = 0;
+
                 DataGridView1.Columns[0].Width = 25;
 
-                for (int i = 1; i < lista_produktow[0].lista_cech.Count + 1; i++)
+                for (int i = 1; i < list_with_spaces[0].lista_cech.Count + 1; i++)
                 {
                     var column = DataGridView1.Columns[i];
-                    column.Width = (800 - 100) / (lista_produktow[0].lista_cech.Count - 1);
-                    summary += column.Width;
+                    column.Width = (800 - 100) / (list_with_spaces[0].lista_cech.Count - 1);
+                    summary_width_of_columns += column.Width;
                 }
 
-                DataGridView1.Width = summary;
-                DataGridView1.Height = (DataGridView1.RowCount + 1) * DataGridView1.RowTemplate.Height;
+                while (true)
+                {
+                    summary_height_of_rows = 0;
+                    for (int i = 0; i < sublist.Count; i++)
+                    {
+                        summary_height_of_rows += DataGridView1.Rows[i].Height;
+                    }
+                    if (summary_height_of_rows > 550)
+                    {
+                        sublist = sublist.GetRange(0, sublist.Count - 1);
+                        DataGridView1.DataSource = sublist;
+                    }
+                    else break;
+                }
+
+                DataGridView1.DataSource = sublist;
+                DataGridView1.Width = summary_width_of_columns;
+                DataGridView1.Height = summary_height_of_rows + 1 * DataGridView1.RowTemplate.Height;
 
                 Bitmap bitmap = new Bitmap(DataGridView1.Width, DataGridView1.Height);
+                DataGridView1.ClearSelection();
                 DataGridView1.DrawToBitmap(bitmap, new Rectangle(0, 0, DataGridView1.Width, DataGridView1.Height));
 
                 ev.Graphics.DrawImage(bitmap, (ev.PageSettings.PaperSize.Width - DataGridView1.Width - DataGridView1.RowHeadersWidth + 10) / 2, wysokosc + wielkosc_tekstu_danych * 2);
 
                 ostatni_element_index += sublist.Count;
 
-                if (ostatni_element_index < lista_produktow.Count)
+                if (ostatni_element_index < list_with_spaces.Count)
                     ev.HasMorePages = true;
                 else
                 {
@@ -390,8 +429,6 @@ namespace Faktura_zadanie_tutoring_
                     ostatni_element_index = 0;
                 }
                     return;
-                
-                    
             }
 
         }
@@ -410,6 +447,7 @@ namespace Faktura_zadanie_tutoring_
 
         private void pd_PrintPage(object sender, PrintPageEventArgs ev)
         {
+            ev.Graphics.Clear(Color.White);
             Faktura faktura_do_druku = new(SprzedawcaNazwaFirmy.Text,
                 SprzedawcaNIP.Text, SprzedawcaAdres.Text, SprzedawcaKodPocztowy.Text,
                 SprzedawcaMiasto.Text, NabywcaNazwaFirmy.Text, NabywcaNIP.Text,
@@ -417,7 +455,6 @@ namespace Faktura_zadanie_tutoring_
 
             ev.HasMorePages = false;
             ev.Graphics.DrawString("", new Font("Arial",1), Brushes.Black, 0, 0);
-            zapisz_dane_do_pliku(faktura_do_druku);
             nazwa_faktury();
             naglowki(sender, ev, faktura_do_druku);
             //wypisz_produkty(sender, ev, lista_produktow, pozycja_ostatniego);
@@ -427,15 +464,42 @@ namespace Faktura_zadanie_tutoring_
 
         }
 
+        private string dodaj_spacje(string str, int coile)
+        {
+            StringBuilder sb = new StringBuilder();
+
+            for (int i = 0; i < str.Length; i++)
+            {
+                if (i % coile == 0 && i != 0)
+                {
+                    sb.Append("- ");
+                }
+                sb.Append(str[i]);
+            }
+
+            string wynik = sb.ToString();
+            return wynik;
+        }
+
         private void DodajPozycje_Click(object sender, EventArgs e)
         {
             if (NazwaProduktu.Text != "" && LiczbaSztuk.Text != "" && CenaNetto.Text != "" && WartoscNetto.Text != "" && StawkaVAT.Text != "" && KwotaVAT.Text != "" && WartoscBrutto.Text != "" && TerminPlatnosci.Text != "" && FormaPlatnosci.Text != "")
             {
-                Produkt p1 = new Produkt(NazwaProduktu.Text, LiczbaSztuk.Text,
-                    CenaNetto.Text, WartoscNetto.Text, StawkaVAT.Text,
-                    KwotaVAT.Text, WartoscBrutto.Text, TerminPlatnosci.Text, FormaPlatnosci.Text);
+                Produkt p1 = new Produkt(
+                    NazwaProduktu.Text, 
+                    LiczbaSztuk.Text,
+                    CenaNetto.Text, 
+                    WartoscNetto.Text, 
+                    StawkaVAT.Text,
+                    KwotaVAT.Text, 
+                    WartoscBrutto.Text, 
+                    TerminPlatnosci.Text, 
+                    FormaPlatnosci.Text
+                    );
+
                 lista_produktow.Add(p1);
-               NazwaProduktu.Text = "";
+                
+                NazwaProduktu.Text = "";
                 LiczbaSztuk.Text = "";
                 CenaNetto.Text = "";
                 WartoscNetto.Text = "";
@@ -444,6 +508,7 @@ namespace Faktura_zadanie_tutoring_
                 WartoscBrutto.Text = "";
                 TerminPlatnosci.Text = "";
                 FormaPlatnosci.Text = "";
+                
             }
             else
             {
@@ -453,6 +518,7 @@ namespace Faktura_zadanie_tutoring_
 
         private void Preview_Click(object sender, EventArgs e)
         {
+ 
             P1doc.PrintPage += new PrintPageEventHandler
                    (this.pd_PrintPage);
             if (P1preview.ShowDialog() == DialogResult.OK)
