@@ -468,26 +468,19 @@ namespace Faktura_zadanie_tutoring_
 
         private string dodaj_spacje(string str, int coile)
         {
-            string[] array = str.Split(" ");
-            StringBuilder new_str = new StringBuilder();
-            for (int k = 0; k < array.Length; k++)
+            StringBuilder sb = new StringBuilder();
+
+            for (int i = 0; i < str.Length; i++)
             {
-                StringBuilder sb = new StringBuilder();
-                for (int i = 0; i < array[k].Length; i++)
+                if (i % coile == 0 && i != 0)
                 {
-                    if (i % coile == 0 && i != 0 && i != array[k].Length - 1)
-                    {
-                        sb.Append("- ");
-                    }
-                    sb.Append(array[k][i]);
+                    sb.Append("- ");
                 }
-
-                string wynik = sb.ToString();
-                new_str.Append(wynik);
-                new_str.Append(" ");
+                sb.Append(str[i]);
             }
-            return new_str.ToString();
 
+            string wynik = sb.ToString();
+            return wynik;
         }
 
         private void DodajPozycje_Click(object sender, EventArgs e)
