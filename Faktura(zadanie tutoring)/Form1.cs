@@ -113,7 +113,7 @@ namespace Faktura_zadanie_tutoring_
         public Form1()
         {
             InitializeComponent();
-            
+
 
             try { Int32.TryParse(File.ReadLines(path).Last(), out numer_faktury); }
             catch (Exception e) { Console.WriteLine(e); }
@@ -128,10 +128,10 @@ namespace Faktura_zadanie_tutoring_
 
         private void Drukuj_Click(object sender, EventArgs e)
         {
-
             P1dialog.Document = P1doc;
             P1dialog.AllowSomePages = false;
             P1dialog.AllowSelection = false;
+
             if (P1dialog.ShowDialog() == DialogResult.OK)
             {
                 P1doc.PrintPage += new PrintPageEventHandler
@@ -160,9 +160,10 @@ namespace Faktura_zadanie_tutoring_
             string numer_faktury_word = "00000000";
             numer_faktury_word = numer_faktury_word.Substring(0, numer_faktury_word.Length - numer_faktury.ToString().Length);
             numer_faktury_word += numer_faktury.ToString();
-            P1doc.DocumentName = "Faktura: " + numer_faktury_word + Faktura_name;
+            P1doc.DocumentName = "Faktura: " + numer_faktury_word + "_" + Faktura_name;
+            P1doc.PrinterSettings.PrintFileName = P1doc.DocumentName;
         }
-        
+
         private void naglowki(object sender, PrintPageEventArgs ev, Faktura faktura_do_druku)
         {
             int wielkosc_tekstu_danych = 12;
@@ -341,7 +342,7 @@ namespace Faktura_zadanie_tutoring_
             Func<string, Font, float> pozycja_srodka = (mytext, myfont) => (ev.PageSettings.PaperSize.Width / 2) - (dlugosc(mytext, myfont) / 2);
 
             ev.Graphics.DrawString("Produkty:", printFontTitles, Brushes.Black, new PointF(pozycja_srodka("Produkty:", printFontTitles), wysokosc));
-            
+
             var DataGridView1 = new DataGridView();
             DataGridView1.DefaultCellStyle.WrapMode = DataGridViewTriState.True;
             DataGridView1.BackgroundColor = Color.White;
@@ -372,9 +373,9 @@ namespace Faktura_zadanie_tutoring_
             {
                 List<Produkt> sublist = list_with_spaces.GetRange(ostatni_element_index, list_with_spaces.Count - ostatni_element_index);
 
-                if (sublist.Count == 0) 
+                if (sublist.Count == 0)
                     break;
-                
+
                 DataGridView1.DataSource = sublist;
                 DataGridView1.AutoSizeRowsMode = DataGridViewAutoSizeRowsMode.AllCells;
                 DataGridView1.RowHeadersVisible = false;
@@ -428,7 +429,7 @@ namespace Faktura_zadanie_tutoring_
                     ev.HasMorePages = false;
                     ostatni_element_index = 0;
                 }
-                    return;
+                return;
             }
 
         }
@@ -454,7 +455,8 @@ namespace Faktura_zadanie_tutoring_
                 NabywcaAdres.Text, NabywcaKodPocztowy.Text, NabywcaMiasto.Text, lista_produktow);
 
             ev.HasMorePages = false;
-            ev.Graphics.DrawString("", new Font("Arial",1), Brushes.Black, 0, 0);
+            ev.PageSettings.PrinterSettings.PrintFileName = P1doc.DocumentName;
+            ev.Graphics.DrawString("", new Font("Arial", 1), Brushes.Black, 0, 0);
             nazwa_faktury();
             naglowki(sender, ev, faktura_do_druku);
             //wypisz_produkty(sender, ev, lista_produktow, pozycja_ostatniego);
@@ -466,19 +468,26 @@ namespace Faktura_zadanie_tutoring_
 
         private string dodaj_spacje(string str, int coile)
         {
-            StringBuilder sb = new StringBuilder();
-
-            for (int i = 0; i < str.Length; i++)
+            string[] array = str.Split(" ");
+            StringBuilder new_str = new StringBuilder();
+            for (int k = 0; k < array.Length; k++)
             {
-                if (i % coile == 0 && i != 0)
+                StringBuilder sb = new StringBuilder();
+                for (int i = 0; i < array[k].Length; i++)
                 {
-                    sb.Append("- ");
+                    if (i % coile == 0 && i != 0 && i != array[k].Length - 1)
+                    {
+                        sb.Append("- ");
+                    }
+                    sb.Append(array[k][i]);
                 }
-                sb.Append(str[i]);
-            }
 
-            string wynik = sb.ToString();
-            return wynik;
+                string wynik = sb.ToString();
+                new_str.Append(wynik);
+                new_str.Append(" ");
+            }
+            return new_str.ToString();
+
         }
 
         private void DodajPozycje_Click(object sender, EventArgs e)
@@ -486,19 +495,19 @@ namespace Faktura_zadanie_tutoring_
             if (NazwaProduktu.Text != "" && LiczbaSztuk.Text != "" && CenaNetto.Text != "" && WartoscNetto.Text != "" && StawkaVAT.Text != "" && KwotaVAT.Text != "" && WartoscBrutto.Text != "" && TerminPlatnosci.Text != "" && FormaPlatnosci.Text != "")
             {
                 Produkt p1 = new Produkt(
-                    NazwaProduktu.Text, 
+                    NazwaProduktu.Text,
                     LiczbaSztuk.Text,
-                    CenaNetto.Text, 
-                    WartoscNetto.Text, 
+                    CenaNetto.Text,
+                    WartoscNetto.Text,
                     StawkaVAT.Text,
-                    KwotaVAT.Text, 
-                    WartoscBrutto.Text, 
-                    TerminPlatnosci.Text, 
+                    KwotaVAT.Text,
+                    WartoscBrutto.Text,
+                    TerminPlatnosci.Text,
                     FormaPlatnosci.Text
                     );
 
                 lista_produktow.Add(p1);
-                
+
                 NazwaProduktu.Text = "";
                 LiczbaSztuk.Text = "";
                 CenaNetto.Text = "";
@@ -508,7 +517,7 @@ namespace Faktura_zadanie_tutoring_
                 WartoscBrutto.Text = "";
                 TerminPlatnosci.Text = "";
                 FormaPlatnosci.Text = "";
-                
+
             }
             else
             {
@@ -518,12 +527,10 @@ namespace Faktura_zadanie_tutoring_
 
         private void Preview_Click(object sender, EventArgs e)
         {
- 
             P1doc.PrintPage += new PrintPageEventHandler
                    (this.pd_PrintPage);
             if (P1preview.ShowDialog() == DialogResult.OK)
             {
-                P1doc.Print();
                 using (StreamWriter sw = new StreamWriter(path, false))
                     sw.Write(numer_faktury.ToString());
                 WriteToDatabase(lista_produktow);
@@ -533,36 +540,36 @@ namespace Faktura_zadanie_tutoring_
         }
 
         public void WriteToDatabase(List<Produkt> lista_produktow)
-    {
+        {
             string connectionString = "Server=DESKTOP-OOPT79L\\SQLEXPRESS;Database=FAKTURA;" +
                 "Integrated Security=True;Encrypt=False;TrustServerCertificate=true;";
 
             using (SqlConnection connection = new SqlConnection(connectionString))
-        {
-            connection.Open();
-
-            foreach (var produkt in lista_produktow)
             {
-                string query = "INSERT INTO Produkty (numer_faktury, nr, nazwa, liczba_sztuk, cena_netto, wartosc_netto, stawka_vat, kwota_vat, wartosc_brutto, termin_platnosci, forma_platnosci) " +
-                               "VALUES (@numer_faktury, @nr, @nazwa, @liczba_sztuk, @cena_netto, @wartosc_netto, @stawka_vat, @kwota_vat, @wartosc_brutto, @termin_platnosci, @forma_platnosci)";
+                connection.Open();
 
-                using (SqlCommand command = new SqlCommand(query, connection))
+                foreach (var produkt in lista_produktow)
                 {
-                    command.Parameters.AddWithValue("@numer_faktury", numer_faktury);
-                    command.Parameters.AddWithValue("@nr", produkt.nr);
-                    command.Parameters.AddWithValue("@nazwa", produkt.nazwa);
-                    command.Parameters.AddWithValue("@liczba_sztuk", produkt.liczba_sztuk);
-                    command.Parameters.AddWithValue("@cena_netto", produkt.cena_netto);
-                    command.Parameters.AddWithValue("@wartosc_netto", produkt.wartosc_netto);
-                    command.Parameters.AddWithValue("@stawka_vat", produkt.stawka_vat);
-                    command.Parameters.AddWithValue("@kwota_vat", produkt.kwota_vat);
-                    command.Parameters.AddWithValue("@wartosc_brutto", produkt.wartosc_brutto);
-                    command.Parameters.AddWithValue("@termin_platnosci", produkt.termin_platnosci);
-                    command.Parameters.AddWithValue("@forma_platnosci", produkt.forma_platnosci);
+                    string query = "INSERT INTO Produkty (numer_faktury, nr, nazwa, liczba_sztuk, cena_netto, wartosc_netto, stawka_vat, kwota_vat, wartosc_brutto, termin_platnosci, forma_platnosci) " +
+                                   "VALUES (@numer_faktury, @nr, @nazwa, @liczba_sztuk, @cena_netto, @wartosc_netto, @stawka_vat, @kwota_vat, @wartosc_brutto, @termin_platnosci, @forma_platnosci)";
 
-                    command.ExecuteNonQuery();
+                    using (SqlCommand command = new SqlCommand(query, connection))
+                    {
+                        command.Parameters.AddWithValue("@numer_faktury", numer_faktury);
+                        command.Parameters.AddWithValue("@nr", produkt.nr);
+                        command.Parameters.AddWithValue("@nazwa", produkt.nazwa);
+                        command.Parameters.AddWithValue("@liczba_sztuk", produkt.liczba_sztuk);
+                        command.Parameters.AddWithValue("@cena_netto", produkt.cena_netto);
+                        command.Parameters.AddWithValue("@wartosc_netto", produkt.wartosc_netto);
+                        command.Parameters.AddWithValue("@stawka_vat", produkt.stawka_vat);
+                        command.Parameters.AddWithValue("@kwota_vat", produkt.kwota_vat);
+                        command.Parameters.AddWithValue("@wartosc_brutto", produkt.wartosc_brutto);
+                        command.Parameters.AddWithValue("@termin_platnosci", produkt.termin_platnosci);
+                        command.Parameters.AddWithValue("@forma_platnosci", produkt.forma_platnosci);
+
+                        command.ExecuteNonQuery();
+                    }
                 }
-            }
 
                 Faktura faktura_do_druku = new(SprzedawcaNazwaFirmy.Text,
                    SprzedawcaNIP.Text, SprzedawcaAdres.Text, SprzedawcaKodPocztowy.Text,
@@ -596,5 +603,5 @@ namespace Faktura_zadanie_tutoring_
         }
 
 
-}
+    }
 }
