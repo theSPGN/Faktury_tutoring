@@ -23,7 +23,7 @@ using System.CodeDom.Compiler;
 using System.Text;
 // Autorstwo: Mateusz Zajda
 
-// Licencja: CC
+// Licencja: GNU
 
 // data gridview
 // data table
@@ -119,8 +119,8 @@ namespace Faktura_zadanie_tutoring_
             catch (Exception e) { Console.WriteLine(e); }
             finally
             {
-                numer_faktury++;// ostatnia faktura miala numer np. 10, wiêc ta ma 11
-                                // jeœli nie by³o faktury to tworzy nowy plik z numerem 1
+                numer_faktury++;// ostatnia faktura miala numer np. 10, wiÃªc ta ma 11
+                                // jeÅ“li nie byÂ³o faktury to tworzy nowy plik z numerem 1
             }
 
 
