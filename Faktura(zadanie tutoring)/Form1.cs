@@ -23,7 +23,7 @@ using System.CodeDom.Compiler;
 using System.Text;
 // Autorstwo: Mateusz Zajda
 
-// Licencja: GNU
+// Licencja: GNU GPL 3.0
 
 // data gridview
 // data table
